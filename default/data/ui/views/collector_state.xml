@@ -1,0 +1,11 @@
+<dashboard>
+  <label>Collector State</label>
+  <description>Shows status overviews and errors in data collection.</description>
+  <row>
+    <event>
+      <title>SNMP Collector Errors</title>
+      <searchString>`snmp_errors`</searchString>
+      <earliestTime>0</earliestTime>
+    </event>
+  </row>
+</dashboard>

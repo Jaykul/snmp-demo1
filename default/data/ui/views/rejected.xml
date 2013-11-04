@@ -1,0 +1,82 @@
+<dashboard>
+  <label>Unused Views</label>
+  <row>
+    <chart>
+      <title>Bytes per Second</title>
+      <searchString>`nexus_snmp` if*Octets OR if*Speed OR ifDescr OR ifAdminStatus OR ifConnectorPresent
+| bucket _time span=60s | stats first(*) as * by _time,host,UID
+| streamstats current=true window=3 global=false count(UID) as dc, range(if*Octets) as delta*, range(_time) as seconds by host, UID | where dc = 3
+| join host [inputlookup snmpInfo.csv]
+| eval bytesIn = coalesce(deltaHcIn, deltaIn)*8 | eval bytesOut = coalesce(deltaHcOut, deltaOut)*-8 
+| eval bytesInPerSec=floor(bytesIn/seconds) | eval bytesOutPerSec=floor(bytesOut/seconds)
+| sort host, UID, dc | eval interface = ifDescr."-".sysName
+| search [search earliest=-2h `nexus_if_stats` | stats last(*) as * by host, UID | sort deltaIn, deltaOut desc | return 10 host, UID]
+| bucket _time span=10m | chart first(bytesInPerSec) as in/s, first(bytesOutPerSec) as out/s over _time by interface</searchString>
+      <earliestTime>-5h@h</earliestTime>
+      <latestTime>now</latestTime>
+      <option name="charting.axisTitleX.visibility">visible</option>
+      <option name="charting.axisTitleY.visibility">visible</option>
+      <option name="charting.axisX.scale">linear</option>
+      <option name="charting.axisY.scale">log</option>
+      <option name="charting.chart">line</option>
+      <option name="charting.chart.nullValueMode">connect</option>
+      <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+      <option name="charting.chart.stackMode">default</option>
+      <option name="charting.chart.style">shiny</option>
+      <option name="charting.drilldown">none</option>
+      <option name="charting.layout.splitSeries">0</option>
+      <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+      <option name="charting.legend.placement">right</option>
+    </chart>
+  </row>
+  <row>
+    <chart>
+      <title>Total Bytes</title>
+      <searchString>`nexus_snmp` if*Octets OR if*Speed OR ifDescr OR ifAdminStatus OR ifConnectorPresent
+| bucket _time span=60s | stats first(*) as * by _time,host,UID
+| streamstats current=true window=3 global=false count(UID) as dc, range(if*Octets) as delta*, range(_time) as seconds by host, UID | where dc &gt; 1
+| join host [inputlookup snmpInfo.csv]
+| eval bytesIn = coalesce(deltaHcIn, deltaIn)*8 | eval bytesOut = coalesce(deltaHcOut, deltaOut)*-8 
+| eval bytesInPerSec=floor(bytesIn/seconds) | eval bytesOutPerSec=floor(bytesOut/seconds)
+| sort host, UID, dc | eval interface = ifDescr."-".sysName
+| search [search earliest=-2h `nexus_if_stats`|stats last(*) as * by host, UID|sort deltaIn, deltaOut desc|return 10 host, UID]
+| bucket _time span=10m | chart first(bytesIn) as in, first(bytesOut) as out over _time by interface</searchString>
+      <earliestTime>-5h</earliestTime>
+      <latestTime>now</latestTime>
+      <option name="charting.axisTitleX.visibility">visible</option>
+      <option name="charting.axisTitleY.visibility">visible</option>
+      <option name="charting.axisX.scale">linear</option>
+      <option name="charting.axisY.scale">log</option>
+      <option name="charting.chart">line</option>
+      <option name="charting.chart.nullValueMode">connect</option>
+      <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+      <option name="charting.chart.stackMode">default</option>
+      <option name="charting.chart.style">shiny</option>
+      <option name="charting.drilldown">all</option>
+      <option name="charting.layout.splitSeries">0</option>
+      <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+      <option name="charting.legend.placement">right</option>
+    </chart>
+  </row>
+  <row>
+    <map>
+      <title>geoStats by Speed</title>
+      <searchString>`nexus_if` | iplocation host | geostats count by speed</searchString>
+      <!--    <searchString>`nexus_if` | iplocation host | fields sysName, sysLocation, ifNumber, speed, geobin, lat, lon | rename lat as latitude, lon as longitude | eval geobin = sysName +" ("+ sysLocation +")" | stats count(eval(speed="GBit")) as Gbit, count(eval(speed="10Gb")) as 10Gb, count(eval(speed="40Gb")) as 40Gb by geobin, latitude, longitude</searchString> -->
+      <earliestTime>-1h</earliestTime>
+      <option name="height">400px</option>
+      <!-- use custom colors -->
+      <option name="mapping.seriesColors">[0x5379af,0x9ac23c,0xf7902b]</option>
+      <!-- adjust marker opacity and size range -->
+      <option name="mapping.tileLayer.url">http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png</option>
+      <option name="mapping.tileLayer.subdomains">[a,b,c]</option>
+      <option name="mapping.markerLayer.markerOpacity">0.8</option>
+      <option name="mapping.markerLayer.markerMinSize">10</option>
+      <option name="mapping.markerLayer.markerMaxSize">60</option>
+      <option name="mapping.tileLayer.minZoom">2</option>
+      <option name="mapping.tileLayer.maxZoom">18</option>
+      <!-- set initial map center and zoom level -->
+      <option name="mapping.map.fitBounds">(37.5,-123,38,-121)</option>
+    </map>
+  </row>  
+</dashboard>

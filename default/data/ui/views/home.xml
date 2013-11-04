@@ -1,0 +1,70 @@
+<dashboard>
+  <label>Status Overview</label>
+  <row>
+    <single>
+      <title>Device Count</title>
+      <searchString>| inputlookup snmpInfo.csv | stats distinct_count(sysName)</searchString>
+      <earliestTime>-15m</earliestTime>
+      <latestTime>now</latestTime>
+    </single>
+    <single>
+      <title>Aggregate Input bps, last 10m</title>
+      <searchString>`nexus_total_io` | stats first(InputPerSec) as InputPerSec</searchString>
+      <earliestTime>-15m</earliestTime>
+      <latestTime>now</latestTime>
+    </single>
+    <single>
+      <title>Aggregate Output bps, last 10m</title>
+      <searchString>`nexus_total_io` | stats first(OutputPerSec) as OutputPerSec</searchString>
+      <earliestTime>-15m</earliestTime>
+      <latestTime>now</latestTime>
+    </single>
+  </row>
+  <row>
+    <table>
+      <searchName>nexus_snmp_devices</searchName>
+      <title>Devices Detail</title>
+    </table>
+  </row>
+  <row>
+    <chart>
+      <title>Device Ports</title>
+      <searchName>port_speed</searchName>
+      <option name="charting.axisTitleX.text">Device</option>
+      <option name="charting.axisTitleX.visibility">visible</option>
+      <option name="charting.axisTitleY.visibility">visible</option>
+      <option name="charting.axisX.scale">linear</option>
+      <option name="charting.axisY.scale">linear</option>
+      <option name="charting.chart">bar</option>
+      <option name="charting.chart.nullValueMode">gaps</option>
+      <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+      <option name="charting.chart.stackMode">stacked</option>
+      <option name="charting.chart.style">shiny</option>
+      <option name="charting.drilldown">none</option>
+      <option name="charting.layout.splitSeries">0</option>
+      <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+      <option name="charting.legend.placement">right</option>
+    </chart>  	
+  </row>
+  <row>
+    <chart>
+      <title>Aggregate Traffic by Switch (last 90 minutes)</title>
+      <searchString>`nexus_if_stats(3)` `nexus_bps` `nexus_joinhost` | bucket _time span=10m | chart sum(bytesInPerSec) as in, sum(bytesOutPerSec) as out over _time by sysName</searchString>
+      <earliestTime>-90m</earliestTime>
+      <latestTime>now</latestTime>
+      <option name="charting.axisTitleX.visibility">visible</option>
+      <option name="charting.axisTitleY.visibility">visible</option>
+      <option name="charting.axisX.scale">linear</option>
+      <option name="charting.axisY.scale">log</option>
+      <option name="charting.chart">area</option>
+      <option name="charting.chart.nullValueMode">zero</option>
+      <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+      <option name="charting.chart.stackMode">default</option>
+      <option name="charting.chart.style">shiny</option>
+      <option name="charting.drilldown">none</option>
+      <option name="charting.layout.splitSeries">0</option>
+      <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+      <option name="charting.legend.placement">bottom</option>
+    </chart>
+  </row>  
+</dashboard>
