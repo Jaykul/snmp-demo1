@@ -34,7 +34,7 @@ The SNMP modular input uses [pySNMP][pySNMP], which requires that the MIB defini
 
     build-pysnmp-mib -o ./py/CISCO-CALLHOME-MIB.py CISCO-CALLHOME-MIB.my
 
-If you like, you can download [my converted copies][mibtgz]. You should note the date is November 2013 -- the older these get, the more likely it is that you should update them from Cisco's source. Regardless of where you get them, you can either compile them into an egg for your particular platform, or just drop the loose .py files into the snmp_ta/bin/mibs folder.
+If you like, you can download [my converted copies][mibtgz]. You should note the date is November 2013 -- the older these get, the more likely it is that you should update them from Cisco's source. Regardless of where you get them, you can either compile them into an egg for your particular platform, or just drop the loose .py files into the snmp_ta/bin/mibs folder. For more information, see the "Adding Custom MIBs" section of the readme included with the SNMP Modular Input.
 
 
 Step 3: Configure Input Stanzas.
