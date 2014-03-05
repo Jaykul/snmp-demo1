@@ -163,7 +163,7 @@ I included in the github project a report which shows all the errors since the l
   [snmp]: http://apps.splunk.com/app/1537/ (SNMP Modular Input)
   [OIDBrowser]: http://tools.cisco.com/Support/SNMP/do/BrowseOID.do (SNMP Object Navigator)
   [nexusconfig]: http://www.cisco.com/en/US/docs/switches/datacenter/sw/5_x/nx-os/system_management/configuration/guide/sm_9snmp.html
-  [mibtgz]: cisco_mibs.tar.gz (My copy of the .my MIBs converted to .py)
+  [mibtgz]: ../../raw/master/cisco_mibs.tar.gz (My copy of the .my MIBs converted to .py)
   [technote8141]: http://www.cisco.com/en/US/tech/tk648/tk362/technologies_tech_note09186a008009496e.shtml
   [streamstats]: http://docs.splunk.com/Documentation/Splunk/6.0/SearchReference/Streamstats
   [pyCrypto]: https://pypi.python.org/pypi/pycrypto
