@@ -46,7 +46,7 @@ Here is the configuration I used for each device: two stanzas, one for the confi
 
 As I worked on what information I needed to query, this list grew gradually. I needed names and software versions, so I started with "system" (from SNMPv2-MIB). When I needed interface performance statistics, I had to search around the internet and Cisco's [Object Navigator][OIDBrowser] before hitting on the interfaces.ifTable and ifMIB.ifMIBObjects.ifXTable etc. 
 
-One thing that ended up being very helful was a full snmpwalk of the devices (dumping it to file), and then looking through the log to see where the interesting infromation was. All told, as a developer, determining which OIDs to query for the information you need is something I never quite felt I had a handle on, and it's clearly a steep learning curve (as you'll see below, I still have several more mib_names listed than I'm actually querying in the object_names).
+One thing that ended up being very helpful was a full snmpwalk of the devices (dumping it to file), and then looking through the log to see where the interesting infromation was. All told, as a developer, determining which OIDs to query for the information you need is something I never quite felt I had a handle on, and it's clearly a steep learning curve (as you'll see below, I still have several more mib_names listed than I'm actually querying in the object_names).
 
 
 	[snmp://nexus 7k1 - info]
@@ -87,9 +87,9 @@ I've configured the index and sourcetypes, and I'm going to use that source_type
 Step 4. Writing SPL Queries
 ===========================
 
-The simple stuff like device status, sysName, software versions and so on are easy to query, but the tricky part of working with SNMP data in Splunk turned out to dealing with tables. A lot of SNMP data is table-based: when you have 150 ethernet ports, you have the same information for each one, so you can either write a query to pull a single piece of information about a single ethernet port, or you can do a bulk get for the whole table and get all the information for all the entries at once. 
+The simple stuff like device status, sysName, software versions and so on are easy to query, but the tricky part of working with SNMP data in Splunk turned out to be dealing with tables. A lot of SNMP data is table-based; when you have 150 ethernet ports, you have the same information for each one, so you can either write a query to pull a single piece of information about a single ethernet port, or you can do a bulk get for the whole table and get them all at once.
 
-The [SNMP Modular Input][snmp] gives you two primary choices to deal with tables: putting each field=value pair as a separate event in Splunk (which results in them being parsed automatically), or writing all the results as a single string (which means you need to write regular expressions to parse the data). Additionally (partly as a result of my frustration with these two options), it now has custom response handlers: the idea is that you can provide a custom response handler in python to convert the data to tabular csv format (or whatever makes sense to you) and get it into Splunk in customized ways.  This last option was added after I'd finished my work, so I haven't written such a handler, instead, I've written queries to turn the split bulk data into tabular data...
+The [SNMP Modular Input][snmp] gives you two primary choices to deal with tables: putting each key=value pair as a separate event in Splunk (which results in them being parsed automatically), or writing all the results as a single string (which means you need to write regular expressions to parse the data). Additionally, it now has custom response handlers: the idea is that you can provide a custom response handler in python to convert the data to tabular csv format (or whatever makes sense to you) and get it into Splunk in customized ways.  This last option was added after I'd finished my work, so I haven't written such a handler, instead, I've written queries to turn the split bulk data into tabular data...
 
 
 I've [posted this to GitHub][demo1], but the basics of the queries are worth explaining. Most of them are in the macros.conf in the github project and the savedsearches.conf, although there are some in the rejected.xml view which I didn't think I would use, but kept around just in case.
@@ -103,13 +103,13 @@ When dealing with SNMP table data, the output from the SNMP modular input in Spl
 
 When working with tables, the default SNMP Modular Input entries include the unique identifier number in quotes. In the case of the ifTable, ifXTable, dot3StatsTable and so on, the unique identifier refers to a specific "interface" (that is, it identifies a particular ethernet jack), and when you do a single snmp bulk get, there are a dozen or more properties returned for each interface, and dozens or hundreds of interfaces on each router. 
 
-Thus, in the transforms file I have this transform which is a regular expressions that defines fields for the MIB, the unique identifier, the property name, and the value, as well as ensuring that the Property=Value field is being generated.
+Thus, in transforms.conf is a regular expressions that defines fields for the MIB, the unique identifier, the property name, and the value, as well as ensuring that the Property=Value field is being generated.
 
 	[snmp_mib-uid]
 	REGEX = ([^:]+)::([^\.]+)\.("?)([^"]*)\3 = \"([^\"]*)\"(?= |\n|$)
 	FORMAT = MIB::$1 UID::$4 Name::$2 $2::$5 Value::$5
 
-Given that transform, every event that's coming from these table will have not only the usual _host and _time, but also the UID to identify which interface jack it's referring to.  For my own sake, I want all of the events that are returned from a single query to be grouped into single events per UID: that is, for the sake of displaying the data, I want one event with a bunch of fields for each ifEntry in the ifTable.
+Given that transform, every event that's coming from these table will have not only the usual _host and _time, but also the UID to identify which interface jack it's referring to.  In this case, I want all of the events that are returned from a single query to be grouped into single events per UID. In other words, for the sake of displaying the data, I want one event with a bunch of fields for each ifEntry in the ifTable.
 
 Then, some lookups
 ------------------
@@ -154,9 +154,9 @@ Additionally in the github project I have example queries showing summary config
 	
 As a final note: I mentiond the problems I had dealing with the data format and the changes that have been made to the SNMP modular input to accomodate future users -- I also had some issues with connectivity where one of the switches was not configured properly for my SNMP queries, and found that the error handling in the SNMP collector didn't tell me which of my input stanzas was the one timing out -- that's also been fixed, and the current release shows the input stanza name and "destination" string whenever it has errors. 
 
-I included in the github project a report which shows all the errors since the last time the modular input was restarted -- that is: since the last time we logged the message about snmp.py being a new scheduled exec process:
+I included in the github project a report which shows all the errors since the last time the modular input was restarted. I do this by looking for the last time we logged the message about snmp.py being a new scheduled exec process:
 
-	index=_internal snmp.py source="*\\var\\log\\splunk\\splunkd.log" | eval restart=if(match(message,"New scheduled exec process: python .*snmp\.py.*"),1,0) | head (restart=0)
+	index=_internal snmp.py source="*splunkd.log" | eval restart=if(match(message,"New scheduled exec process: python .*snmp\.py.*"),1,0) | head (restart=0)
 
 
   [apps]: http://apps.splunk.com (Splunk Apps Site)
